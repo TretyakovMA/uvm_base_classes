@@ -1,7 +1,7 @@
 # UVM Base Classes
 
 [![UVM](https://img.shields.io/badge/UVM-1.2-blue.svg)](https://www.accellera.org/community/uvm)
-[![SystemVerilog](https://img.shields.io/badge/SystemVerilog-2023-blue.svg)](https://standards.ieee.org/ieee/1800/7743/)
+[![SystemVerilog](https://img.shields.io/badge/SystemVerilog-2017-blue.svg)](https://standards.ieee.org/ieee/1800/6700/)
 
 Набор **переиспользуемых параметризованных базовых классов** для UVM-тестбенчей.  
 Предназначен для использования как **git submodule** в других проектах.
@@ -37,7 +37,7 @@ uvm_base_classes|
 
 ```bash
 # В корне вашего проекта
-git submodule add https://github.com/ВАШ_НИК/uvm-base-classes.git tb/uvm_base_classes
+git submodule add https://github.com/TretyakovMA/uvm_base_classes.git uvm_base_classes
 git submodule update --init --recursive
 ```
 
@@ -46,7 +46,6 @@ git submodule update --init --recursive
 В вашем основном пакете:
 
 ```systemverilog
-
 package my_project_pkg;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
@@ -74,9 +73,9 @@ endpackage
 
 ```systemverilog
 base_agent_config #(my_if) cfg = base_agent_config#(my_if)::type_id::create("cfg");
-cfg.vif          = my_if_h;
-cfg.is_active    = UVM_ACTIVE;
-cfg.has_monitor  = 1;
+cfg.vif             = my_if_h;
+cfg.is_active       = UVM_ACTIVE;
+cfg.has_monitor     = 1;
 cfg.reset_sensitive = 1;
 
 uvm_config_db#(base_agent_config#(my_if))::set(null, "*", "agent_config", cfg);
