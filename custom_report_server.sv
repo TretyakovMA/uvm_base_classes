@@ -1,9 +1,6 @@
 `ifndef CUSTOM_REPORT_SERVER
 `define CUSTOM_REPORT_SERVER
 
-`ifdef USE_C_FUNCTIONS
-import "DPI-C" function string get_simulation_start_time();
-`endif
 
 `ifdef USE_CUSTOM_REPORT_SERVER
 class custom_report_server extends uvm_default_report_server;
@@ -76,27 +73,25 @@ class custom_report_server extends uvm_default_report_server;
             run_count = "0";
         end
 
-        // Получаем значение seed
-        seed = $get_initial_random_seed();
+        // Получаем время старта симуляции  
+        if (clp.get_arg_value("+SIM_START_TIME=", start_time_sim) == 0) begin
+            start_time_sim = "N/A";
+        end
 
-        // Получаем время старта симуляции из C-функции
-`ifdef USE_C_FUNCTIONS
-        start_time_sim = get_simulation_start_time();
-`else
-        start_time_sim = "N/A";
-`endif        
+        // Получаем значение seed
+        seed = $get_initial_random_seed();   
 
         // Формируем имя файла sim_log
         sim_log_file = $sformatf("sim_log_%s_%s.log", test_name, run_count);
 
         
-        errors_fd = $fopen("errors.log", "a");
+        errors_fd = $fopen("errors.log", "a+");
         if (errors_fd == 0) begin
             `uvm_fatal(get_type_name(), "Failed to open errors.log for logging!");
         end
 
         // Открываем файл sim_log
-        sim_log_fd = $fopen(sim_log_file, "w");
+        sim_log_fd = $fopen(sim_log_file, "w+");
         if (sim_log_fd == 0) begin
             `uvm_fatal("get_type_name()", $sformatf("Failed to open %s for logging!", sim_log_file));
         end
