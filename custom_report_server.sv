@@ -48,7 +48,9 @@ class custom_report_server extends uvm_default_report_server;
     local string  start_time_sim;         // Время старта симуляции
     local string  log_header;
     local int     seed;
-    local bit     has_errors = 0;
+
+    string errors_file;            // Имя файла для ошибок
+    string log_dir = "./";
     
 
     function new();
@@ -78,20 +80,21 @@ class custom_report_server extends uvm_default_report_server;
             start_time_sim = "N/A";
         end
 
+        if (clp.get_arg_value("+LOG_DIR=", log_dir) == 0) begin
+            log_dir = "./"; // Если не передали, пишем в корень sim/
+        end
+
         // Получаем значение seed
         seed = $get_initial_random_seed();   
 
         // Формируем имя файла sim_log
         sim_log_file = $sformatf("sim_log_%s_%s.log", test_name, run_count);
-
+        errors_file = $sformatf("errors_%s_%s.log", test_name, run_count);
         
-        errors_fd = $fopen("errors.log", "a+");
-        if (errors_fd == 0) begin
-            `uvm_fatal(get_type_name(), "Failed to open errors.log for logging!");
-        end
+        
 
         // Открываем файл sim_log
-        sim_log_fd = $fopen(sim_log_file, "w+");
+        sim_log_fd = $fopen({log_dir, sim_log_file}, "w+");
         if (sim_log_fd == 0) begin
             `uvm_fatal("get_type_name()", $sformatf("Failed to open %s for logging!", sim_log_file));
         end
@@ -109,12 +112,14 @@ class custom_report_server extends uvm_default_report_server;
         $fdisplay(sim_log_fd, "%s", no_ansi_msg);
 
         if (report_message.get_severity() inside {UVM_WARNING, UVM_ERROR, UVM_FATAL}) begin
-            if (has_errors == 0) begin
-                $fdisplay(errors_fd, "%s", log_header);
+            if (errors_fd == 0) begin
+                errors_fd = $fopen({log_dir, errors_file}, "w+");
+                if (errors_fd == 0)
+                    $fdisplay(errors_fd, "%s", log_header);
             end
 
-            has_errors = 1;
-            $fdisplay(errors_fd, "%s", no_ansi_msg);
+            if (errors_fd != 0)
+                $fdisplay(errors_fd, "%s", no_ansi_msg);
         end
         super.execute_report_message(report_message, composed_message);
     endfunction: execute_report_message
@@ -214,10 +219,11 @@ class custom_report_server extends uvm_default_report_server;
         if (file != 0) begin
             $fclose(file);
         end
-        
 
-        $fclose(errors_fd);
         $fclose(sim_log_fd);
+        if (errors_fd != 0)
+            $fclose(errors_fd);
+        
     endfunction: report_summarize
 
 endclass
